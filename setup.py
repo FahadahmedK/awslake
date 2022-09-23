@@ -11,8 +11,6 @@ setup(
     url='',
     install_requires=[
         'boto3',
-        'json',
-        'logging',
         'botocore',
         'paramiko'
     ],
