@@ -222,12 +222,21 @@ class DataLake:
     def put_file_transfer(self, local_path, bucket_name, new_file_name):
 
         try:
-            self.sftp.put(local_path, f'{bucket_name}/{new_file_name}')
+            self.sftp.put(local_path, f'/{bucket_name}/{new_file_name}')
             print(f'Upload successful')
         except ClientError as e:
             logger.exception(e.response['Error']['Code'])
             raise
         return self
+
+    def download_file(self, bucket_name, file_to_download, local_path):
+
+        s3 = boto3.resource(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key, aws_secret_access_key=self.aws_secret_key)
+        try:
+            s3.meta.client.download_file(bucket_name=f'lumifai-{bucket_name}', Key=file_to_download, Filename=local_path)
+        except ClientError as e:
+            logger.exception(e)
+            raise
 
     def close_transfer_server(self):
         self.sftp.close()
