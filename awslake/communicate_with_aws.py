@@ -194,9 +194,15 @@ class DataLake:
             server_id = self.server_id
         elif server_id is not None:
             self.server_id = server_id
-        self.client.start_server(ServerId=server_id)
 
         server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
+
+        while server_status != 'OFFLINE':
+            server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
+            continue
+
+        self.client.start_server(ServerId=server_id)
+
         while server_status != 'ONLINE':
             server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
             continue
@@ -214,7 +220,14 @@ class DataLake:
         return self
 
     def put_file_transfer(self, local_path, bucket_name, new_file_name):
-        self.sftp.put(local_path, f'{bucket_name}/{new_file_name}')
+
+        try:
+            self.sftp.put(local_path, f'{bucket_name}/{new_file_name}')
+            print(f'Upload successful')
+        except ClientError as e:
+            logger.exception(e.response['Error']['Code'])
+            raise
+        return self
 
     def close_transfer_server(self):
         self.sftp.close()
