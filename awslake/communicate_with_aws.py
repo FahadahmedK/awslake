@@ -198,16 +198,16 @@ class DataLake:
         server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
 
         if server_status == 'STOPPING':
-
             while server_status != 'OFFLINE':
                 server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
                 continue
 
         self.client.start_server(ServerId=server_id)
 
-        while server_status != 'ONLINE':
-            server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
-            continue
+        if server_status != 'ONLINE':
+            while server_status != 'ONLINE':
+                server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
+                continue
         print('Server is online now')
 
         host = f'{server_id}.server.transfer.eu-central-1.amazonaws.com'  # copy the AWS transfer endpoint
