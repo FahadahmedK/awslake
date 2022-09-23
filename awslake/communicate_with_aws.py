@@ -251,9 +251,8 @@ class DataLake:
             raise
 
     def list_files(self, bucket_name):
-        s3 = self.s3_client(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key,
-                            aws_secret_access_key=self.aws_secret_key)
-        return [obj['Key'] for obj in s3.list_objects(Bucket=bucket_name)['Contents']]
+
+        return [obj['Key'] for obj in self.s3_client.list_objects(Bucket=f'lumifai-{bucket_name}')['Contents']]
 
     def close_transfer_server(self):
         self.sftp.close()
