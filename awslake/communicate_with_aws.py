@@ -9,13 +9,31 @@ logger = logging.getLogger(__name__)
 
 class DataLake:
 
-    def __init__(self, region):
+    def __init__(self, region, aws_access_key=None, aws_secret_key=None):
+
+        if aws_access_key is None:
+            self.s3_client = boto3.client('s3', region_name=region)
+            self.iam_client = boto3.client('iam', region_name=region)
+            self.transfer_client = boto3.client('transfer', region_name=region)
+        else:
+            self.s3_client = boto3.client(service_name='s3',
+                                          region_name=region,
+                                          aws_access_key_id=aws_access_key,
+                                          aws_secret_access_key=aws_secret_key)
+
+            self.iam_client = boto3.client(service_name='iam',
+                                           region_name=region,
+                                           aws_access_key_id=aws_access_key,
+                                           aws_secret_access_key=aws_secret_key)
+
+            self.transfer_client = boto3.client(service_name='transfer',
+                                                region_name=region,
+                                                aws_access_key_id=aws_access_key,
+                                                aws_secret_access_key=aws_secret_key)
 
         self.region = region
-        self.s3_client = boto3.client('s3', region_name=region)
-        self.iam_client = boto3.client('iam', region_name=region)
-        # self.iam_resource = boto3.resource('iam', region_name=region)
-        self.transfer_client = boto3.client('transfer', region_name=region)
+        self.aws_access_key = aws_access_key
+        self.aws_secret_key = aws_secret_key
         self.server_id = None
         self.client = None
         self.sftp = None
@@ -157,14 +175,14 @@ class DataLake:
 
         return response
 
-    def AWS(self, access_key, secret_key, service, region=None):
+    def AWS(self, service, region=None):
 
         if region is None:
             region = self.region
 
         self.client = boto3.client(service_name=service,
-                                   aws_access_key_id=access_key,
-                                   aws_secret_access_key=secret_key,
+                                   aws_access_key_id=self.aws_access_key,
+                                   aws_secret_access_key=self.aws_secret_key,
                                    region_name=region)
         return self
 
