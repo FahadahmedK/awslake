@@ -197,9 +197,11 @@ class DataLake:
 
         server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
 
-        while server_status != 'OFFLINE':
-            server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
-            continue
+        if server_status == 'STOPPING':
+
+            while server_status != 'OFFLINE':
+                server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
+                continue
 
         self.client.start_server(ServerId=server_id)
 
