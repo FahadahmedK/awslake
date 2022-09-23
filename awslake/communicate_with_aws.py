@@ -195,7 +195,7 @@ class DataLake:
             client = self.client
         client.start_server(ServerId=server_id)
 
-        server_status = client.desrcribe_server(ServerId=server_id)['Server']['State']
+        server_status = client.describe_server(ServerId=server_id)['Server']['State']
         while server_status != 'ONLINE':
             server_status = client.describe_server(ServerId=server_id)['Server']['State']
             continue
