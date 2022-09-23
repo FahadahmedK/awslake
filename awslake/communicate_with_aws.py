@@ -251,7 +251,7 @@ class DataLake:
             raise
 
     def list_files(self, bucket_name):
-        s3 = boto3.resource(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key,
+        s3 = self.s3_client(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key,
                             aws_secret_access_key=self.aws_secret_key)
         return [obj['Key'] for obj in s3.list_objects(Bucket=bucket_name)['Contents']]
 
