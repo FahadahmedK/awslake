@@ -1,8 +1,9 @@
 import json
-import boto3
 import logging
-from botocore.exceptions import ClientError
+import time
+import boto3
 import paramiko
+from botocore.exceptions import ClientError
 from . import __version__
 
 logger = logging.getLogger(__name__)
@@ -198,7 +199,6 @@ class DataLake:
         server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
 
         if server_status == 'STOPPING':
-            print('stuck')
             while server_status != 'OFFLINE':
                 server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
                 continue
@@ -206,13 +206,12 @@ class DataLake:
         self.client.start_server(ServerId=server_id)
 
         if server_status != 'ONLINE':
-            print('stuck 2')
             while server_status != 'ONLINE':
                 server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
                 continue
 
         print('Server is online now')
-
+        time.sleep(5)
         host = f'{server_id}.server.transfer.eu-central-1.amazonaws.com'  # copy the AWS transfer endpoint
         ssh_client = paramiko.SSHClient()
         policy = paramiko.AutoAddPolicy()
@@ -236,12 +235,18 @@ class DataLake:
 
     def download_file(self, bucket_name, file_to_download, local_path):
 
-        s3 = boto3.resource(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key, aws_secret_access_key=self.aws_secret_key)
+        s3 = boto3.resource(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key,
+                            aws_secret_access_key=self.aws_secret_key)
         try:
             s3.meta.client.download_file(Bucket=f'lumifai-{bucket_name}', Key=file_to_download, Filename=local_path)
         except ClientError as e:
             logger.exception(e)
             raise
+
+    def list_files(self, bucket_name):
+        s3 = boto3.resource(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key,
+                            aws_secret_access_key=self.aws_secret_key)
+        return [obj['Key'] for obj in s3.list_objects(Bucket=bucket_name)['Contents']]
 
     def close_transfer_server(self):
         self.sftp.close()
