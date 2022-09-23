@@ -227,14 +227,14 @@ class DataLake:
 
         return self
 
-    def put_file_transfer(self, local_path, bucket_name, folder='False'):
+    def put_file_transfer(self, local_path, bucket_name, folder=False):
 
         try:
             if folder:
                 for file in os.listdir(local_path):
-                    self.sftp.put(f'{local_path}/{file}', f'{bucket_name}/{file}')
+                    self.sftp.put(f'{local_path}/{file}', f'lumifai-{bucket_name}/{file}')
             else:
-                self.sftp.put(local_path, f'/{bucket_name}/{local_path}')
+                self.sftp.put(local_path, f'/lumifai-{bucket_name}/{local_path}')
             print(f'Upload successful')
         except Exception as e:
             raise e
