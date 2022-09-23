@@ -7,7 +7,7 @@ setup(
     author_email='fahad.ahmed95@live.com',
     description='Communicate with AWS infrastructure',
     packages=find_packages(),
-    python_requires='>=3.9.0',
+    python_requires='~=3.10.0',
     url='',
     install_requires=[
         'boto3',
