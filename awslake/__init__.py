@@ -1,2 +1,2 @@
 __version__ = '1.0'
-from .DataLake import DataLake
+from .communicate_with_aws import DataLake
