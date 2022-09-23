@@ -185,21 +185,20 @@ class DataLake:
                                    aws_access_key_id=self.aws_access_key,
                                    aws_secret_access_key=self.aws_secret_key,
                                    region_name=region)
-        return self
 
-    def establish_sftp(self, user_name, private_key, client=None, server_id=None):
+    def establish_sftp(self, user_name, private_key, server_id=None):
+
+        self.AWS(service='transfer')
 
         if server_id is None:
             server_id = self.server_id
         elif server_id is not None:
             self.server_id = server_id
-        if client is None:
-            client = self.client
-        client.start_server(ServerId=server_id)
+        self.client.start_server(ServerId=server_id)
 
-        server_status = client.describe_server(ServerId=server_id)['Server']['State']
+        server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
         while server_status != 'ONLINE':
-            server_status = client.describe_server(ServerId=server_id)['Server']['State']
+            server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
             continue
         print('Server is online now')
 
