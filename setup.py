@@ -6,7 +6,7 @@ setup(
     author='Fahad Ahmed',
     author_email='fahad.ahmed95@live.com',
     description='Communicate with AWS infrastructure',
-    packages=['awslake'],
+    packages=[''],
     python_requires='>=3.7.0',
     url='',
     install_requires=[
