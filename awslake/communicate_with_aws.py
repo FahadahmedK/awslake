@@ -4,6 +4,8 @@ import logging
 from botocore.exceptions import ClientError
 import paramiko
 
+from . import __version__
+
 logger = logging.getLogger(__name__)
 
 
