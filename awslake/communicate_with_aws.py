@@ -4,8 +4,6 @@ import logging
 from botocore.exceptions import ClientError
 import paramiko
 
-from . import __version__
-
 logger = logging.getLogger(__name__)
 
 
@@ -198,11 +196,7 @@ class DataLake:
 
         server_status = client.desrcribe_server(ServerId=server_id)['Server']['State']
         while server_status != 'ONLINE':
-<<<<<<< HEAD
             server_status = client.describe_server(ServerId=server_id)['Server']['State']
-=======
-            server_status = client.desrcribe_server(ServerId=server_id)['Server']['State']
->>>>>>> 24bbae76c9e9342744c484224d27b8c756db6c9a
             continue
         print('Server is online now')
 
