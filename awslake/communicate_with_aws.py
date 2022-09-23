@@ -191,6 +191,8 @@ class DataLake:
 
         if server_id is None:
             server_id = self.server_id
+        elif server_id is not None:
+            self.server_id = server_id
         if client is None:
             client = self.client
         client.start_server(ServerId=server_id)
