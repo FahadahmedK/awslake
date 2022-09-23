@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import time
@@ -202,13 +203,16 @@ class DataLake:
             while server_status != 'OFFLINE':
                 server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
                 continue
-
+        else:
+            pass
         self.client.start_server(ServerId=server_id)
 
         if server_status != 'ONLINE':
             while server_status != 'ONLINE':
                 server_status = self.client.describe_server(ServerId=server_id)['Server']['State']
                 continue
+        else:
+            pass
 
         print('Server is online now')
         time.sleep(5)
@@ -223,14 +227,17 @@ class DataLake:
 
         return self
 
-    def put_file_transfer(self, local_path, bucket_name, new_file_name):
+    def put_file_transfer(self, local_path, bucket_name, folder='False'):
 
         try:
-            self.sftp.put(local_path, f'/{bucket_name}/{new_file_name}')
+            if folder:
+                for file in os.listdir(local_path):
+                    self.sftp.put(f'{local_path}/{file}', f'{bucket_name}/{file}')
+            else:
+                self.sftp.put(local_path, f'/{bucket_name}/{local_path}')
             print(f'Upload successful')
-        except ClientError as e:
-            logger.exception(e.response['Error']['Code'])
-            raise
+        except Exception as e:
+            raise e
         return self
 
     def download_file(self, bucket_name, file_to_download, local_path):
