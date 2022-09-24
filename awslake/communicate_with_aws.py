@@ -215,7 +215,7 @@ class DataLake:
             pass
 
         print('Server is online now')
-        time.sleep(5)
+        time.sleep(15)
         host = f'{server_id}.server.transfer.eu-central-1.amazonaws.com'  # copy the AWS transfer endpoint
         ssh_client = paramiko.SSHClient()
         policy = paramiko.AutoAddPolicy()
