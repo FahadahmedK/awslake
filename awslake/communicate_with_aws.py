@@ -35,9 +35,6 @@ class DataLake:
                                                 region_name=region,
                                                 aws_access_key_id=aws_access_key,
                                                 aws_secret_access_key=aws_secret_key)
-            self.s3_resource = boto3.resource(service_name='s3', region_name='eu-central-1',
-                                              aws_access_key_id=self.aws_access_key,
-                                              aws_secret_access_key=self.aws_secret_key)
 
         self.region = region
         self.aws_access_key = aws_access_key
