@@ -247,7 +247,7 @@ class DataLake:
         transfer = S3Transfer(self.s3_client)
         try:
             if folder:
-                for file in os.listdir(bucket_name):
+                for file in os.listdir(remote_path):
                     transfer.upload_file(filename='{local_path}/{file}', bucket=bucket_name,
                                          key=remote_path)
             else:
@@ -264,7 +264,7 @@ class DataLake:
             if folder:
                 for file in self.list_files(bucket_name):
                     if os.path.split(file)[0] == remote_path and os.path.split(file)[-1] != '':
-                        transfer.download_file(bucket=bucket_name, key=remote_path, filename=local_path)
+                        transfer.download_file(bucket=bucket_name, key=f'{remote_path}/{file}', filename=local_path)
                     else:
                         continue
             else:
