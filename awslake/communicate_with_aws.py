@@ -266,21 +266,21 @@ class DataLake:
             logger.exception(e)
             raise
 
-    def download_file(self, bucket_name, file=None, remote_folder_path=None):
+    def download_file(self, bucket_name, file_path=None, remote_folder_path=None):
 
         transfer = S3Transfer(self.s3_client)
         try:
             if remote_folder_path is not None:
 
                 for obj in self.list_files(bucket_name):
-                    if os.path.split(obj)[0] == remote_folder_path and os.path.split(obj)[-1] != '':
+                    if os.path.split(obj)[0] == os.path.normpath(remote_folder_path):
                         transfer.download_file(bucket=bucket_name, key=os.path.join(remote_folder_path, obj),
                                                filename=obj)
                     else:
                         continue
 
-            if file is not None:
-                transfer.download_file(bucket=bucket_name, key=file, filename=file)
+            if file_path is not None:
+                transfer.download_file(bucket=bucket_name, key=file_path, filename=os.path.split(file_path)[-1])
         except ClientError as e:
             logger.exception(e)
             raise
