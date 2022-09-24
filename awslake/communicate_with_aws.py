@@ -275,7 +275,7 @@ class DataLake:
                 for obj in self.list_files(bucket_name):
                     if os.path.split(obj)[0] == os.path.normpath(remote_folder_path):
                         transfer.download_file(bucket=bucket_name, key=obj,
-                                               filename=obj)
+                                               filename=os.path.split(obj)[-1])
                     else:
                         continue
 
