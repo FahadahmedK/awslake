@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='awslake',
-    version='1.1.4',
+    version='1.1.5',
     author='Fahad Ahmed',
     author_email='fahad.ahmed95@live.com',
     description='Communicate with AWS infrastructure',
