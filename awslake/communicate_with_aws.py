@@ -273,7 +273,7 @@ class DataLake:
             if remote_folder_path is not None:
 
                 for obj in self.list_files(bucket_name):
-                    if os.path.split(obj)[0] == os.path.normpath(remote_folder_path):
+                    if os.path.split(obj)[0] == os.path.normpath(remote_folder_path) and  os.path.split(obj)[-1] != '':
                         transfer.download_file(bucket=bucket_name, key=obj,
                                                filename=os.path.split(obj)[-1])
                     else:
