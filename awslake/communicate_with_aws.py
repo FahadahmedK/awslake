@@ -242,33 +242,45 @@ class DataLake:
             raise e
         return self
 
-    def upload_file(self, local_path, bucket_name, remote_path, folder=False):
-
+    def upload_file(self, local_path, bucket_name, remote_folder_path=None, folder=False):
+        # remote path to have a forward slash in the end test/
         transfer = S3Transfer(self.s3_client)
         try:
             if folder:
-                for file in os.listdir(remote_path):
-                    transfer.upload_file(filename='{local_path}/{file}', bucket=bucket_name,
-                                         key=remote_path)
+                for file in os.listdir(local_path):
+                    if remote_folder_path is None:
+                        transfer.upload_file(filename=f'{local_path}/{file}', bucket=bucket_name,
+                                             key=file)
+                    else:
+                        transfer.upload_file(filename=os.path.join(local_path, file), bucket=bucket_name,
+                                             key=os.path.join(remote_folder_path, file))
+
             else:
-                transfer.upload_file(filename=local_path, bucket=bucket_name,
-                                     key=remote_path)
+                if remote_folder_path is None:
+                    transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                         key=local_path)
+                else:
+                    transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                         key=os.path.join(remote_folder_path, os.path.split(local_path)[-1]))
         except ClientError as e:
             logger.exception(e)
             raise
 
-    def download_file(self, local_path, bucket_name, remote_path, folder=False):
+    def download_file(self, bucket_name, file=None, remote_folder_path=None):
 
         transfer = S3Transfer(self.s3_client)
         try:
-            if folder:
-                for file in self.list_files(bucket_name):
-                    if os.path.split(file)[0] == remote_path and os.path.split(file)[-1] != '':
-                        transfer.download_file(bucket=bucket_name, key=f'{remote_path}/{file}', filename=local_path)
+            if remote_folder_path is not None:
+
+                for obj in self.list_files(bucket_name):
+                    if os.path.split(obj)[0] == remote_folder_path and os.path.split(obj)[-1] != '':
+                        transfer.download_file(bucket=bucket_name, key=os.path.join(remote_folder_path, obj),
+                                               filename=obj)
                     else:
                         continue
-            else:
-                transfer.download_file(bucket=bucket_name, key=remote_path, filename=local_path)
+
+            if file is not None:
+                transfer.download_file(bucket=bucket_name, key=file, filename=file)
         except ClientError as e:
             logger.exception(e)
             raise
