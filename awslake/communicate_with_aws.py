@@ -5,6 +5,7 @@ import time
 import boto3
 import paramiko
 from botocore.exceptions import ClientError
+from s3transfer import S3Transfer
 from . import __version__
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ class DataLake:
             self.s3_client = boto3.client('s3', region_name=region)
             self.iam_client = boto3.client('iam', region_name=region)
             self.transfer_client = boto3.client('transfer', region_name=region)
+            self.s3_resource = boto3.resource(service_name='s3')
         else:
             self.s3_client = boto3.client(service_name='s3',
                                           region_name=region,
@@ -33,6 +35,9 @@ class DataLake:
                                                 region_name=region,
                                                 aws_access_key_id=aws_access_key,
                                                 aws_secret_access_key=aws_secret_key)
+            self.s3_resource = boto3.resource(service_name='s3', region_name='eu-central-1',
+                                              aws_access_key_id=self.aws_access_key,
+                                              aws_secret_access_key=self.aws_secret_key)
 
         self.region = region
         self.aws_access_key = aws_access_key
@@ -240,12 +245,33 @@ class DataLake:
             raise e
         return self
 
-    def download_file(self, bucket_name, file_to_download, local_path):
+    def upload_file(self, local_path, bucket_name, remote_path, folder=False):
 
-        s3 = boto3.resource(service_name='s3', region_name='eu-central-1', aws_access_key_id=self.aws_access_key,
-                            aws_secret_access_key=self.aws_secret_key)
+        transfer = S3Transfer(self.s3_client)
         try:
-            s3.meta.client.download_file(Bucket=f'{bucket_name}', Key=file_to_download, Filename=local_path)
+            if folder:
+                for file in os.listdir(bucket_name):
+                    transfer.upload_file(filename='{local_path}/{file}', bucket=bucket_name,
+                                         key=remote_path)
+            else:
+                transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                     key=remote_path)
+        except ClientError as e:
+            logger.exception(e)
+            raise
+
+    def download_file(self, local_path, bucket_name, remote_path, folder=False):
+
+        transfer = S3Transfer(self.s3_client)
+        try:
+            if folder:
+                for file in self.list_files(bucket_name):
+                    if os.path.split(file)[0] == remote_path and os.path.split(file)[-1] != '':
+                        transfer.download_file(bucket=bucket_name, key=remote_path, filename=local_path)
+                    else:
+                        continue
+            else:
+                transfer.download_file(bucket=bucket_name, key=remote_path, filename=local_path)
         except ClientError as e:
             logger.exception(e)
             raise
