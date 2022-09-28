@@ -244,7 +244,7 @@ class DataLake:
             raise e
         return self
 
-    def upload_file(self, local_path, bucket_name, remote_folder_path=None, folder=False):
+    def upload(self, local_path, bucket_name, remote_folder_path=None, folder=False):
         # remote path to have a forward slash in the end test/
         transfer = S3Transfer(self.s3_client)
         try:
@@ -268,7 +268,7 @@ class DataLake:
             logger.exception(e)
             raise
 
-    def download_file(self, bucket_name, file_path=None, version=None, remote_folder_path=None):
+    def download(self, bucket_name, file_path=None, version=None, remote_folder_path=None):
 
         transfer = S3Transfer(self.s3_client)
         try:
@@ -292,12 +292,16 @@ class DataLake:
         object_list = [obj['Key'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
         object_dates = [obj['LastModified'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
 
-        assert last_n < len(object_list), 'last_n cannot be greater than length of object list'
-
         if last_n is None:
             return object_list
         else:
+            assert last_n < len(object_list), 'last_n cannot be greater than length of object list'
             return np.array(object_list)[np.argsort(object_dates)[::-1]][:last_n]
+
+    def delete(self, bucket_name, objects):
+        assert isinstance(objects, list), "pass a list to the objects argument even if it's a single file"
+        self.s3_client.delete_objects(Bucket=bucket_name,
+                                      Delete={'Objects': [{'Key': obj} for obj in objects]})
 
     def close_transfer_server(self):
         self.sftp.close()
