@@ -246,46 +246,46 @@ class DataLake:
 
     def upload_file(self, local_path, bucket_name, remote_folder_path=None, folder=False):
         # remote path to have a forward slash in the end test/
-        with S3Transfer(self.s3_client) as transfer:
-            try:
-                if folder:
-                    for file in tqdm(os.listdir(local_path)):
-                        if remote_folder_path is None:
-                            transfer.upload_file(filename=f'{local_path}/{file}', bucket=bucket_name,
-                                                 key=file)
-                        else:
-                            transfer.upload_file(filename=os.path.join(local_path, file), bucket=bucket_name,
-                                                 key=os.path.join(remote_folder_path, file))
-
-                else:
+        transfer = S3Transfer(self.s3_client)
+        try:
+            if folder:
+                for file in tqdm(os.listdir(local_path)):
                     if remote_folder_path is None:
-                        tqdm(transfer.upload_file(filename=local_path, bucket=bucket_name,
-                                                  key=local_path))
+                        transfer.upload_file(filename=f'{local_path}/{file}', bucket=bucket_name,
+                                             key=file)
                     else:
-                        tqdm(transfer.upload_file(filename=local_path, bucket=bucket_name,
-                                                  key=os.path.join(remote_folder_path, os.path.split(local_path)[-1])))
-            except ClientError as e:
-                logger.exception(e)
-                raise
+                        transfer.upload_file(filename=os.path.join(local_path, file), bucket=bucket_name,
+                                             key=os.path.join(remote_folder_path, file))
+
+            else:
+                if remote_folder_path is None:
+                    tqdm(transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                              key=local_path))
+                else:
+                    tqdm(transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                              key=os.path.join(remote_folder_path, os.path.split(local_path)[-1])))
+        except ClientError as e:
+            logger.exception(e)
+            raise
 
     def download_file(self, bucket_name, file_path=None, version=None, remote_folder_path=None):
 
-        with S3Transfer(self.s3_client) as transfer:
-            try:
-                if remote_folder_path is not None:
+        transfer = S3Transfer(self.s3_client)
+        try:
+            if remote_folder_path is not None:
 
-                    for obj in tqdm(self.list_files(bucket_name)):
-                        if os.path.split(obj)[0] == os.path.normpath(remote_folder_path) and os.path.split(obj)[-1] != '':
-                            transfer.download_file(bucket=bucket_name, key=obj,
-                                                   filename=os.path.split(obj)[-1])
-                        else:
-                            continue
+                for obj in tqdm(self.list_files(bucket_name)):
+                    if os.path.split(obj)[0] == os.path.normpath(remote_folder_path) and os.path.split(obj)[-1] != '':
+                        transfer.download_file(bucket=bucket_name, key=obj,
+                                               filename=os.path.split(obj)[-1])
+                    else:
+                        continue
 
-                if file_path is not None:
-                    tqdm(transfer.download_file(bucket=bucket_name, key=file_path, filename=os.path.split(file_path)[-1]))
-            except ClientError as e:
-                logger.exception(e)
-                raise
+            if file_path is not None:
+                tqdm(transfer.download_file(bucket=bucket_name, key=file_path, filename=os.path.split(file_path)[-1]))
+        except ClientError as e:
+            logger.exception(e)
+            raise
 
     def list_files(self, bucket_name, last_n=None):
 
