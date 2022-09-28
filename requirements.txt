@@ -7,7 +7,6 @@ s3transfer==0.6.0
 jmespath==1.0.1
 six==1.16.0
 certifi==2022.9.14
-idna==3.4
 python-dateutil==2.8.2
 urllib3==1.26.12
 docutils==0.19
@@ -16,3 +15,5 @@ bcrypt==4.0.0
 pycparser==2.21
 setuptools==60.2.0
 requests==2.28.1
+numpy==1.23.3
+tqdm==4.64.1

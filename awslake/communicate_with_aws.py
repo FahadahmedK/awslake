@@ -6,6 +6,8 @@ import boto3
 import paramiko
 from botocore.exceptions import ClientError
 from s3transfer import S3Transfer
+import numpy as np
+from tqdm import tqdm
 from . import __version__
 
 logger = logging.getLogger(__name__)
@@ -244,50 +246,58 @@ class DataLake:
 
     def upload_file(self, local_path, bucket_name, remote_folder_path=None, folder=False):
         # remote path to have a forward slash in the end test/
-        transfer = S3Transfer(self.s3_client)
-        try:
-            if folder:
-                for file in os.listdir(local_path):
-                    if remote_folder_path is None:
-                        transfer.upload_file(filename=f'{local_path}/{file}', bucket=bucket_name,
-                                             key=file)
-                    else:
-                        transfer.upload_file(filename=os.path.join(local_path, file), bucket=bucket_name,
-                                             key=os.path.join(remote_folder_path, file))
+        with S3Transfer(self.s3_client) as transfer:
+            try:
+                if folder:
+                    for file in tqdm(os.listdir(local_path)):
+                        if remote_folder_path is None:
+                            transfer.upload_file(filename=f'{local_path}/{file}', bucket=bucket_name,
+                                                 key=file)
+                        else:
+                            transfer.upload_file(filename=os.path.join(local_path, file), bucket=bucket_name,
+                                                 key=os.path.join(remote_folder_path, file))
 
-            else:
-                if remote_folder_path is None:
-                    transfer.upload_file(filename=local_path, bucket=bucket_name,
-                                         key=local_path)
                 else:
-                    transfer.upload_file(filename=local_path, bucket=bucket_name,
-                                         key=os.path.join(remote_folder_path, os.path.split(local_path)[-1]))
-        except ClientError as e:
-            logger.exception(e)
-            raise
-
-    def download_file(self, bucket_name, file_path=None, remote_folder_path=None):
-
-        transfer = S3Transfer(self.s3_client)
-        try:
-            if remote_folder_path is not None:
-
-                for obj in self.list_files(bucket_name):
-                    if os.path.split(obj)[0] == os.path.normpath(remote_folder_path) and  os.path.split(obj)[-1] != '':
-                        transfer.download_file(bucket=bucket_name, key=obj,
-                                               filename=os.path.split(obj)[-1])
+                    if remote_folder_path is None:
+                        tqdm(transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                                  key=local_path))
                     else:
-                        continue
+                        tqdm(transfer.upload_file(filename=local_path, bucket=bucket_name,
+                                                  key=os.path.join(remote_folder_path, os.path.split(local_path)[-1])))
+            except ClientError as e:
+                logger.exception(e)
+                raise
 
-            if file_path is not None:
-                transfer.download_file(bucket=bucket_name, key=file_path, filename=os.path.split(file_path)[-1])
-        except ClientError as e:
-            logger.exception(e)
-            raise
+    def download_file(self, bucket_name, file_path=None, version=None, remote_folder_path=None):
 
-    def list_files(self, bucket_name):
+        with S3Transfer(self.s3_client) as transfer:
+            try:
+                if remote_folder_path is not None:
 
-        return [obj['Key'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
+                    for obj in tqdm(self.list_files(bucket_name)):
+                        if os.path.split(obj)[0] == os.path.normpath(remote_folder_path) and os.path.split(obj)[-1] != '':
+                            transfer.download_file(bucket=bucket_name, key=obj,
+                                                   filename=os.path.split(obj)[-1])
+                        else:
+                            continue
+
+                if file_path is not None:
+                    tqdm(transfer.download_file(bucket=bucket_name, key=file_path, filename=os.path.split(file_path)[-1]))
+            except ClientError as e:
+                logger.exception(e)
+                raise
+
+    def list_files(self, bucket_name, last_n=None):
+
+        object_list = [obj['Key'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
+        object_dates = [obj['LastModified'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
+
+        assert last_n < len(object_list), 'last_n cannot be greater than length of object list'
+
+        if last_n is None:
+            return object_list
+        else:
+            return np.array(object_list)[np.argsort(object_dates)[::-1]][:last_n]
 
     def close_transfer_server(self):
         self.sftp.close()
