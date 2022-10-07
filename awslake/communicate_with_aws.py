@@ -289,19 +289,24 @@ class DataLake:
             assert last_n < len(object_list), 'last_n cannot be greater than length of object list'
             return np.array(object_list)[np.argsort(object_dates)[::-1]][:last_n]
 
-    def delete(self, bucket_name, objects=None, folder_path=None):
-        if object is not None:
-            assert isinstance(objects, list), "pass a list to the objects argument even if it's a single file"
+    def delete(self, bucket_name, objects=None, remote_folder_path=None):
+        if objects is not None:
+            "pass a list to the objects argument even if it's a single file"
             self.s3_client.delete_objects(Bucket=bucket_name,
                                           Delete={'Objects': [{'Key': obj} for obj in objects]})
-        if folder_path is not None:
-            list_liked_pages = [{'Key': object['Key']} for object in
-                                self.s3_client.list_objects(Bucket='lumifai-raw', Prefix='liked_pages/')['Contents']]
-            self.s3_client.delete_objects(Bucket=bucket_name,
-                                          Delete={
-                                              'Objects': list_liked_pages,
-                                              'Quiet': True
-                                          })
+        if remote_folder_path is not None:
+            while True:
+                try:
+                    list_liked_pages = [{'Key': object['Key']} for object in
+                                        self.s3_client.list_objects(Bucket=bucket_name, Prefix=remote_folder_path)['Contents']]
+                    self.s3_client.delete_objects(Bucket=bucket_name,
+                                                  Delete={
+                                                      'Objects': list_liked_pages,
+                                                      'Quiet': True
+                                                  })
+                except KeyError:
+                    print('Either the folder has been deleted or that it does not exist in the first place')
+
 
     def close_transfer_server(self):
         self.sftp.close()
