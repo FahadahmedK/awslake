@@ -306,6 +306,7 @@ class DataLake:
                                                   })
                 except KeyError:
                     print('Either the folder has been deleted or that it does not exist in the first place')
+                    break
 
 
     def close_transfer_server(self):
