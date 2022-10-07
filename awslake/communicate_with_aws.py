@@ -219,29 +219,16 @@ class DataLake:
             pass
 
         print('Server is online now')
-        time.sleep(15)
-        host = f'{server_id}.server.transfer.eu-central-1.amazonaws.com'  # copy the AWS transfer endpoint
-        ssh_client = paramiko.SSHClient()
-        policy = paramiko.AutoAddPolicy()
-        ssh_client.set_missing_host_key_policy(policy)
-        ssh_client.connect(host, username=user_name, pkey=paramiko.RSAKey.from_private_key_file(private_key))
-        self.sftp = ssh_client.open_sftp()
+        #time.sleep(15)
+        #host = f'{server_id}.server.transfer.eu-central-1.amazonaws.com'  # copy the AWS transfer endpoint
+        #ssh_client = paramiko.SSHClient()
+        #policy = paramiko.AutoAddPolicy()
+        #ssh_client.set_missing_host_key_policy(policy)
+        #ssh_client.connect(host, username=user_name, pkey=paramiko.RSAKey.from_private_key_file(private_key))
+        #self.sftp = ssh_client.open_sftp()
 
-        print('SFTP connection is open now')
+        #print('SFTP connection is open now')
 
-        return self
-
-    def put_file_transfer(self, local_path, bucket_name, folder=False):
-
-        try:
-            if folder:
-                for file in os.listdir(local_path):
-                    self.sftp.put(f'{local_path}/{file}', f'{bucket_name}/{file}')
-            else:
-                self.sftp.put(local_path, f'{bucket_name}/{local_path}')
-            print(f'Upload successful')
-        except Exception as e:
-            raise e
         return self
 
     def upload(self, local_path, bucket_name, remote_folder_path=None, folder=False):
@@ -287,10 +274,14 @@ class DataLake:
             logger.exception(e)
             raise
 
-    def list_files(self, bucket_name, last_n=None):
+    def list_files(self, bucket_name, last_n=None, remote_folder_path=None):
 
         object_list = [obj['Key'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
         object_dates = [obj['LastModified'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}')['Contents']]
+
+        if remote_folder_path is not None:
+            object_list = [obj['Key'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}', Prefix=remote_folder_path)['Contents']]
+            object_dates = [obj['LastModified'] for obj in self.s3_client.list_objects(Bucket=f'{bucket_name}', Prefix=remote_folder_path)['Contents']]
 
         if last_n is None:
             return object_list
@@ -298,12 +289,23 @@ class DataLake:
             assert last_n < len(object_list), 'last_n cannot be greater than length of object list'
             return np.array(object_list)[np.argsort(object_dates)[::-1]][:last_n]
 
-    def delete(self, bucket_name, objects):
-        assert isinstance(objects, list), "pass a list to the objects argument even if it's a single file"
-        self.s3_client.delete_objects(Bucket=bucket_name,
-                                      Delete={'Objects': [{'Key': obj} for obj in objects]})
+    def delete(self, bucket_name, objects=None, folder_path=None):
+        if object is not None:
+            assert isinstance(objects, list), "pass a list to the objects argument even if it's a single file"
+            self.s3_client.delete_objects(Bucket=bucket_name,
+                                          Delete={'Objects': [{'Key': obj} for obj in objects]})
+        if folder_path is not None:
+            list_liked_pages = [{'Key': object['Key']} for object in
+                                self.s3_client.list_objects(Bucket='lumifai-raw', Prefix='liked_pages/')['Contents']]
+            self.s3_client.delete_objects(Bucket=bucket_name,
+                                          Delete={
+                                              'Objects': list_liked_pages,
+                                              'Quiet': True
+                                          })
 
     def close_transfer_server(self):
         self.sftp.close()
         self.client.stop_server(ServerId=self.server_id)
         print('Server is offline now')
+
+
